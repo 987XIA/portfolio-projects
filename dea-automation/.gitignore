@@ -1,0 +1,31 @@
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# DEA project data
+dea-automation/data/*
+!dea-automation/data/sample_dea.txt
+
+# DEA generated reports
+dea-automation/output/*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Excel temporary files
+~$*
