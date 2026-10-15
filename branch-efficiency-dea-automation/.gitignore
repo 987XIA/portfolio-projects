@@ -13,12 +13,12 @@ venv/
 *.key
 
 # DEA project datas
-branch-efficiency-dea/data/*
-!branch-efficiency-dea/data/sample_dea.txt
-branch-efficiency-dea/output/*
+branch-efficiency-dea-automation/data/*
+!branch-efficiency-dea-automation/data/sample_dea.txt
+branch-efficiency-dea-automation/output/*
 
 # DEA generated reports
-dea-automation/output/*
+branch-efficiency-dea-automation/output/*
 
 # IDE
 .vscode/
