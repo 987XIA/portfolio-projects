@@ -12,9 +12,10 @@ venv/
 *.pem
 *.key
 
-# DEA project data
-dea-automation/data/*
-!dea-automation/data/sample_dea.txt
+# DEA project datas
+branch-efficiency-dea/data/*
+!branch-efficiency-dea/data/sample_dea.txt
+branch-efficiency-dea/output/*
 
 # DEA generated reports
 dea-automation/output/*
