@@ -89,24 +89,19 @@ A **decision-making unit (DMU)** is a branch. The implementation formulates a **
 
 For branch \(o\), the objective is to maximize weighted outputs:
 
-\[
-\max \sum_r u_r y_{ro}
-\]
 
+$$
+max \sum_r u_r y_{ro}
+$$
 Subject to:
 
-\[
+$$
 \sum_i v_i x_{io}=1
-\]
-
-\[
-\sum_r u_r y_{rj}\leq\sum_i v_i x_{ij}\quad\text{for every branch }j
-\]
-
-\[
-u_r\geq0,\qquad v_i\geq0
-\]
-
+\\
+\sum_r u_r y_{rj}\leq\sum_i v_i x_{ij}
+\quad\text{for every branch }j
+\\u_r\geq0,\qquad v_i\geq0
+$$
 Where:
 
 - \(x_{ij}\): input \(i\) used by branch \(j\).
