@@ -1,132 +1,186 @@
 # Branch Operational Efficiency Assessment
 
+**Python | pandas | PuLP | openpyxl | Data Envelopment Analysis (DEA)**
+
 ## Project Overview
 
-This project assesses the relative operational efficiency of branches using Data Envelopment Analysis (DEA). It reads local branch input/output data, builds and solves one DEA model per branch, and generates an Excel report.
+This project implements a local Python workflow to assess the relative operational efficiency of branches using **Data Envelopment Analysis (DEA)**. The program reads branch input/output data from a structured text file, formulates and solves a linear programming model for each branch, and generates an Excel workbook containing efficiency scores, source data, and optimized model weights.
 
-The assessment compares branches in the supplied dataset. It supports operational performance review; it does not measure absolute performance, establish causation, or prescribe management decisions. The current workflow ends when the local Excel report is generated.
+The workflow was inspired by a legacy Excel/VBA-based efficiency assessment process. It demonstrates a Python approach to data preparation, optimization, and reporting; **it has not been verified as an exact replacement for the original Excel/VBA Solver model**.
+
+DEA compares branches within the supplied peer group. Its scores indicate *relative* efficiency under the implemented model, not absolute performance, causal effects, or prescribed management actions.
 
 ## Business Problem
 
-Each branch consumes multiple resources (inputs) and produces multiple services or results (outputs). DEA evaluates branches relative to the peer group represented in the supplied data.
+Branches consume different combinations of resources (**inputs**) to produce services or operational results (**outputs**). Comparing them using a single metric may overlook differences in the resources used and outcomes produced.
 
-## Project Objectives
+DEA provides a framework for evaluating multiple inputs and outputs together, helping analysts identify branches on the observed efficiency frontier and branches that score below that frontier. The results can support comparative operational performance reviews, subject to the quality and representativeness of the input data.
 
-1. Read and parse the local branch input/output data.
-2. Calculate relative efficiency scores for each branch using DEA.
-3. Produce an Excel report with scores, source data, and model weights.
+## Implemented Features
 
-The implemented DEA formulation has not been reconciled against the original VBA/Solver setup. Interpret results as comparisons under this model.
+- Parses a locally stored, comma-separated text file in the legacy three-line-per-branch format.
+- Ignores blank lines, converts input/output values to numbers, and checks that each record has the expected number of values.
+- Builds a **constant-returns-to-scale (CCR) DEA multiplier model** for each branch using PuLP.
+- Solves the branch-level linear programs and captures solver status, relative efficiency scores, and optimized weights.
+- Produces an Excel workbook with separate sheets for efficiency results, original inputs, original outputs, and model weights.
 
 ## Technology Stack
 
-| Component       | Proposed technology                                | Purpose                                       |
-| --------------- | -------------------------------------------------- | --------------------------------------------- |
-| Programming     | Python 3                                           | Workflow orchestration and business logic     |
-| Data processing | pandas                                             | Structured input/output tables                |
-| Optimization    | PuLP with a compatible LP solver                   | DEA linear programming models                 |
-| Excel reporting | openpyxl                                           | Generate and format `.xlsx` reports           |
-| Testing         | pytest                                             | Available for automated tests; test cases are a future improvement |
+| Component | Technology | Role |
+| --- | --- | --- |
+| Programming | Python 3 | Local workflow and analysis logic |
+| Data processing | pandas | Structured input/output data |
+| Optimization | PuLP and a compatible LP solver | CCR DEA linear programming |
+| Excel reporting | openpyxl | Workbook creation and formatting |
+| Testing | Manual end-to-end verification | Current validation approach; automated pytest tests are not yet implemented |
 
 ## Workflow
 
 ```text
-Local sample_dea.txt
+Local data/sample_dea.txt
           |
           v
-Read and parse input data
+Read and parse input/output records
           |
           v
-Build and solve DEA models
+Build branch-level DEA models with PuLP
           |
           v
-Generate local Excel report
+Solve models and collect scores and weights
+          |
+          v
+Generate output/dea_results.xlsx
 ```
 
-The workflow ends with the Excel report. FTP transfer, cloud storage, email delivery, and scheduling are possible future improvements, not current deliverables.
+The current workflow is **local only**. FTP transfers, Google Drive uploads, email delivery, and scheduling are not implemented.
 
-## Input Data: DEA.txt
+## Input Data Format
 
-The legacy input is a comma-separated text file without a conventional header row for branch records.
-Line 1 lists input factor names; line 2 lists output factor names.
-Each subsequent branch occupies three lines: branch name, input values, and output values.
-The number of input and output factors should be determined dynamically from the first two lines.
+The input is a comma-separated text file with a custom layout:
 
-Example structure:
+1. First nonblank line: names of the input factors.
+2. Second nonblank line: names of the output factors.
+3. Each branch then occupies three nonblank lines: branch name, input values, and output values.
+
+Example (`data/sample_dea.txt`):
 
 ```text
 Faculty,Support Staff,Supply Budget
-
 Credit Hours,Research Pubs
-
 Business
-
 150,70,5
-
 15.0,225
-
 Education
-
 60,20,3
-
 5.4,70
 ```
 
-### Parser Checks and Future Validation
+### Implemented Parser Checks
 
-The parser ignores blank lines, converts branch values to numbers, and checks that input/output counts match their factor names. Potential future checks include duplicate names, non-finite or negative values, and zero or otherwise unsuitable quantities.
+- Skips blank lines in the source file.
+- Converts branch input and output values to numeric types.
+- Checks that the number of input/output values matches the respective factor-name count.
+
+Additional checks—such as duplicate branch names, non-finite values, negative values, and unsuitable zeros—are potential future enhancements. Support for different numbers of input/output factors should be verified against the implementation before relying on it for new datasets.
 
 ## DEA Optimization Model
 
-DEA compares decision-making units (DMUs), here the branches, using multiple inputs and outputs.
-The implementation builds one constant-returns-to-scale (CCR) multiplier model for each evaluated branch.
-For each evaluated branch, the model maximizes weighted outputs while normalizing its weighted inputs to 1 and limiting every branch's weighted outputs to its weighted inputs.
+A **decision-making unit (DMU)** is a branch. The implementation formulates a **CCR multiplier model** separately for each evaluated branch.
 
-For evaluated branch `o`, maximize:
+For branch \(o\), the objective is to maximize weighted outputs:
 
-`sum_r(u[r] * y[r,o])`
+\[
+\max \sum_r u_r y_{ro}
+\]
 
-subject to:
+Subject to:
 
-- `sum_i(v[i] * x[i,o]) = 1` (normalize the evaluated branch's weighted inputs)
-- `sum_r(u[r] * y[r,j]) <= sum_i(v[i] * x[i,j])` for every branch `j`
-- `u[r] >= 0` and `v[i] >= 0` for all output and input weights.
+\[
+\sum_i v_i x_{io}=1
+\]
 
-Here `x` and `y` represent input and output quantities, and `v` and `u` are input and output weights. The solved objective value is the branch's relative efficiency score: 1 indicates the observed efficiency frontier, while a value below 1 indicates lower relative efficiency within this dataset.
+\[
+\sum_r u_r y_{rj}\leq\sum_i v_i x_{ij}\quad\text{for every branch }j
+\]
 
-`src/dea_model.py` builds the models, and `src/report.py` solves them and writes the results to `output/dea_results.xlsx`. This implemented model has not been confirmed against the original VBA/Solver settings.
+\[
+u_r\geq0,\qquad v_i\geq0
+\]
 
-## Expected Report
+Where:
 
-The Excel workbook contains an **Efficiency Summary** (branch, solver status, and score), the original **Input Data** and **Output Data**, and the optimized **Weights** for each branch.
+- \(x_{ij}\): input \(i\) used by branch \(j\).
+- \(y_{rj}\): output \(r\) produced by branch \(j\).
+- \(v_i\): weight assigned to input \(i\).
+- \(u_r\): weight assigned to output \(r\).
 
-Run the complete workflow from the project directory:
+With this model, an optimal efficiency score of **1** places a branch on the observed efficiency frontier; a score **below 1** indicates lower relative efficiency in the supplied dataset. Scores should only be interpreted for models with an appropriate optimal solver status.
+
+`src/dea_model.py` constructs the DEA models. `src/report.py` solves them and writes the Excel output. The model has **not** been reconciled with the original VBA/Excel Solver configuration.
+
+## Generated Excel Report
+
+The workflow writes `output/dea_results.xlsx`, with the following information:
+
+| Worksheet | Contents | Purpose |
+| --- | --- | --- |
+| Efficiency Summary | Branch, solver status, efficiency score | Compare relative branch efficiency and inspect solution status |
+| Input Data | Original input quantities | Trace results back to the source resources |
+| Output Data | Original output quantities | Review the outputs used in the model |
+| Weights | Optimized input/output weights by branch | Inspect the model's selected factor weights |
+
+Running the script again **overwrites the existing report** at this path.
+
+## Project Structure
+
+The project is intended to live inside a larger `portfolio-project` GitHub repository as its own folder:
+
+```text
+portfolio-project/
+└── dea-automation/                  # Folder name may vary in your repository
+    ├── README.md
+    ├── requirements.txt
+    ├── data/
+    │   └── sample_dea.txt
+    ├── src/
+    │   ├── parser.py
+    │   ├── dea_model.py
+    │   └── report.py
+    └── output/                      # Generated workbook saved here
+```
+
+## How to Run
+
+From the **DEA project folder**, install the dependencies listed in `requirements.txt`:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+Then run:
 
 ```powershell
 python src\parser.py
 ```
 
-The workflow reads `data/sample_dea.txt` and writes `output/dea_results.xlsx`, replacing the previous report if one exists.
+The program reads `data/sample_dea.txt` and generates `output/dea_results.xlsx`. This command reflects the completed project workflow described in the existing implementation README.
 
-## Project Structure
+## Validation and Project Outcome
 
-```text
-branch-efficiency-dea-automation/
-├── data/
-│   └── sample_dea.txt
-├── output/
-├── src/
-│   ├── parser.py
-│   ├── dea_model.py
-│   ├── report.py
-├── requirements.txt
-└── README.md
-```
+The local sample workflow was executed end to end. **All four sample branch models solved to optimality**, and the generated Excel workbook was checked for its expected sheets and results. Python compilation also passed.
 
-Real operational data, credentials, and stakeholder email addresses must not be committed to a public repository.
+The completed project demonstrates how Python can combine structured data processing, linear programming, and standardized spreadsheet reporting in one repeatable local analytical workflow. It is a **working DEA assessment**, not a production-integrated automation service or a verified one-for-one migration of the legacy VBA solution.
 
-## Validation and Future Improvements
+**Testing limitation:** There are currently no automated test cases in the project; `pytest` does not collect tests.
 
-The sample workflow was run end to end: all four sample models solved optimally, and the generated workbook was verified to contain the expected sheets and results. Python compilation also passed. There are currently no automated test files in `tests/`, so pytest collects no tests.
+## Limitations and Future Improvements
 
-Possible future improvements include adding automated tests, strengthening input validation, and reconciling the implemented formulation with the original VBA/Solver setup. These are not required to complete the current assessment workflow, which ends with the Excel report.
+- Reconcile the implemented DEA objective, constraints, and numerical results with the legacy Excel/VBA Solver setup.
+- Add automated parser, model, and report tests with `pytest`.
+- Expand input validation to handle duplicate names, invalid numeric values, negative quantities, and edge cases.
+- Verify and document dynamic support for datasets with different counts of input and output factors.
+- Consider optional FTP ingestion, cloud storage, email distribution, and scheduled execution after the local workflow is fully validated.
+
+## Data and Repository Safety
+
+Use only public, synthetic, or appropriately anonymized branch data in a public GitHub portfolio. Do not commit confidential operational data, API credentials, or stakeholder contact information. Generated reports should also be reviewed before publication.
