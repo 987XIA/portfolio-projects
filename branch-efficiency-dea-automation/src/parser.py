@@ -1,5 +1,7 @@
 import pandas as pd
 from pathlib import Path
+from dea_model import build_dea_model as create_dea_models
+from report import generate_dea_report
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -131,15 +133,24 @@ def rearrange_data_for_modeling():
 
 
 def build_dea_model():
-    pass
+    if any(
+        value is None
+        for value in (var_inputs, var_outputs, var_units, data_inputs, data_outputs)
+    ):
+        raise RuntimeError("DEA data must be rearranged before building the model")
+
+    return create_dea_models(
+        var_inputs, var_outputs, var_units, data_inputs, data_outputs
+    )
 
 
-def report_dea_results():
-    pass
+def report_dea_results(models, df_inputs, df_outputs):
+    return generate_dea_report(models, df_inputs, df_outputs)
 
 
 if __name__ == "__main__":
     import_dea_data()
-    rearrange_data_for_modeling()
-    build_dea_model()
-    report_dea_results()
+    df_inputs, df_outputs = rearrange_data_for_modeling()
+    models = build_dea_model()
+    report_path = report_dea_results(models, df_inputs, df_outputs)
+    print(f"DEA report saved to {report_path}")
