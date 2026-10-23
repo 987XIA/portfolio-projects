@@ -170,23 +170,16 @@ Real operational data, credentials, and stakeholder email addresses must not be 
 
 ### Parser functions
 
-`import_dea_data()` reads `data/sample_dea.txt`, removes blank lines and
-surrounding whitespace, and writes the result to `data/dea_cleansed.txt`.
+`import_dea_data()` reads `data/sample_dea.txt`, removes blank lines and surrounding whitespace, and writes the result to `data/dea_cleansed.txt`.
 
-`rearrange_data_for_modeling()` reads the cleansed file line by line. It reads
-the input and output factor names, then reads each branch name and its input
-and output value lines. It validates that the values are numeric and that
-their counts match the factor names, then splits each value line on commas,
-trims surrounding whitespace, and converts each value to a float.
+`rearrange_data_for_modeling()` reads the cleansed file line by line. It reads the input and output factor names, then reads each branch name and its input and output value lines. It validates that the values are numeric and that their counts match the factor names, then splits each value line on commas, trims surrounding whitespace, and converts each value to a float.
 
-After parsing, `var_inputs` and `var_outputs` contain factor-name lists,
-`var_units` contains branch names, and `data_inputs` and `data_outputs` each
-contain a list of float values for every branch. Items at the same index in
-these lists refer to the same branch. For example, the Business branch has
-input values `[150.0, 70.0, 5.0]` and output values `[15.0, 225.0]`.
-The function returns two pandas DataFrames: `(df_inputs, df_outputs)`.
-Each DataFrame has one row per branch, its corresponding factors as columns,
-and branch names as the index. For example:
+After parsing, `var_inputs` and `var_outputs` contain factor-name lists,`var_units` contains branch names, and `data_inputs` and `data_outputs` each
+contain a list of float values for every branch. 
+
+Items at the same index in these lists refer to the same branch. For example, the Business branch has input values `[150.0, 70.0, 5.0]` and output values `[15.0, 225.0]`.
+sThe function returns two pandas DataFrames: `(df_inputs, df_outputs)`.
+Each DataFrame has one row per branch, its corresponding factors as columns, and branch names as the index. For example:
 
 ```python
 df_inputs, df_outputs = rearrange_data_for_modeling()
